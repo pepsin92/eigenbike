@@ -6,8 +6,8 @@ from urllib.parse import urljoin
 from itertools import count
 
 base_url = 'https://kaktusbike.sk'
-base_dir = './data'
-request_frequency = 5
+base_dir = './data/training'
+request_frequency = 20
 
 session = requests_html.HTMLSession()
 
@@ -31,9 +31,11 @@ def parse_category(name, category_url):
             response = requests.get(img_url, stream=True)
             if response.ok:
                 fn = '/'.join((base_dir, name, str(i + j) + '.jpeg'))
+                # print(fn)
                 with open(fn, 'wb') as f:
                     for x in response.iter_content(1024):
                         f.write(x)
+                    f.close()
             else:
                 print(response)
             sleep(1 / request_frequency)
@@ -42,14 +44,16 @@ def parse_category(name, category_url):
             break
 
 
-categories = {'road': 'cestne-bicykle',
-              'city': 'mestske-bicykle-skladacky',
-              'mtb': 'horske-bicykle-celoodpruzene'
-              }
+def scrape():
 
-for k, v in categories.items():
-    try:
-        os.makedirs(base_dir + '/' + k)
-    except OSError:
-        pass
-    parse_category(k, v)
+    categories = {'road': 'cestne-bicykle',
+                  # 'city': 'mestske-bicykle-skladacky',
+                  'mtb': 'horske-bicykle-celoodpruzene'
+                  }
+
+    for k, v in categories.items():
+        try:
+            os.makedirs(base_dir + '/' + k)
+        except OSError:
+            pass
+        parse_category(k, v)

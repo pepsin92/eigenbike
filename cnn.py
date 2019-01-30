@@ -11,6 +11,10 @@ from glob import glob
 base_dir = './data'
 datasets = ['mtb, city, road']
 
+from scrapers import scrape
+# scrape(0.2)
+
+
 
 def load_data(directory=base_dir, categories=None):
     def replace_color(arr):
@@ -21,7 +25,7 @@ def load_data(directory=base_dir, categories=None):
 
     idg = ImageDataGenerator(preprocessing_function=replace_color)
 
-    data = idg.flow_from_directory(base_dir, (64, 64), 'grayscale', class_mode='categorical')
+    data = idg.flow_from_directory(directory, (64, 64), 'grayscale', class_mode='categorical')
 
     return data
 
@@ -37,9 +41,9 @@ def load_data(directory=base_dir, categories=None):
 # X_input = []
 # Y_input = []
 
-data = load_data()
+training_data = load_data(base_dir+'/training')
 
-print(len(data), data)
+print(len(training_data), training_data)
 
 # for x, y in data:
 #     print(x.shape, y.shape)
@@ -67,7 +71,7 @@ layer = Conv2D(1, (5, 5), strides=(2, 2), activation='sigmoid')(layer)
 layer = Flatten()(layer)
 # print(int_shape(layer))
 # layer = Dense(4, activation='relu')(layer)
-layer = Dense(3, activation='softmax')(layer)
+layer = Dense(training_data.num_classes, activation='softmax')(layer)
 # print(int_shape(layer))
 
 model = Model(input_layer, layer)
@@ -78,4 +82,6 @@ model.compile(loss='categorical_crossentropy',
 
 model.summary()
 
-model.fit_generator(data, epochs=1000)
+validation_data = load_data(base_dir+'/validation')
+
+model.fit_generator(training_data, epochs=100, validation_data=validation_data)
