@@ -7,7 +7,11 @@ from mpl_toolkits.mplot3d import Axes3D
 from sklearn.decomposition import PCA
 from sklearn import svm
 
-PCA_SIZE = 32
+from scrapers import scrape
+
+# scrape(0.1, rescrape=True)
+
+PCA_SIZE = 2
 
 def normalize_set(X):
     # X = X / 255.
@@ -21,7 +25,7 @@ def normalize_set(X):
 base_dir = './data'
 datasets = ['mtb, city, road']
 
-X_inputs, Y_inputs, data = load_data(base_dir, as_array=True)
+X_inputs, Y_inputs, data = load_data(base_dir+'/training', as_array=True)
 
 print(X_inputs.shape, Y_inputs.shape)
 
@@ -41,25 +45,24 @@ out = pca.transform(inp)
 
 eigenbike = pca.components_.reshape((-1, 64, 64))
 
-# print(pca.components_[0])
-# print(eigenbike)
-
 plt.close('all')
 
 # w=10
 # h=10
 # fig=plt.figure(figsize=(64, 64))
-# columns = 4
-# rows = 3
+# columns = 3
+# rows = 2
 # for i in range(1, columns*rows +1):
 #     img = eigenbike[i-1]
 #     fig.add_subplot(rows, columns, i)
 #     plt.imshow(img, cmap='gray')
 # plt.show()
 
+# train SVM
+
 Y_classes = np.array([np.where(i)[0][0] for i in Y_inputs])
 
-clf = svm.SVC(gamma='scale', kernel='rbf')
+clf = svm.SVC(gamma='scale', kernel='linear')
 clf.fit(out[:,:PCA_SIZE], Y_classes)
 
 
@@ -106,7 +109,7 @@ def plot_contours(ax, clf, xx, yy, **params):
 # Plot PCA
 
 fig = plt.figure(figsize = (8,8))
-ax = fig.add_subplot(1,1,1)
+ax = fig.add_subplot(1,1,1, projection='3d')
 ax.set_title(clf.kernel)
 ax.set_xlabel('Principal Component 1', fontsize=15)
 ax.set_ylabel('Principal Component 2', fontsize=15)
@@ -121,17 +124,34 @@ cm = ListedColormap(colors)
 
 class_names = [x[0] for x in sorted(data.class_indices.items(), key=lambda y:y[1])]
 
-print(out.shape)
+# print(out.shape)
 for x, y in zip(out, Y_inputs):
     # print(x)
     i = 0
     col = colors[y == 1][0]
-    ax.scatter(x[0]
-               , x[1]
-               , c = col
-               , s = 50)
+    # ax.scatter(x[0]
+    #            , x[1]
+    #            # , x[2]
+    #            , c = col
+    #            , s = 50)
 # ax.legend(labels=class_names)
 ax.grid()
-print('training score:', clf.score(out[:,:PCA_SIZE], Y_classes))
+# print('training score:', clf.score(out[:,:PCA_SIZE], Y_classes))
+# print(Y_classes)
 
-plt.show()
+# plt.show()
+
+X_val, Y_val, _ = load_data(base_dir+'/validation', as_array=True)
+
+X_val = X_val.reshape((-1, 64*64))
+
+X_val, X_val_mean= normalize_set(X_val)
+
+X_val_out = pca.transform(X_val)
+
+Y_val_classes = np.array([np.where(i)[0][0] for i in Y_val])
+
+print('training score:', clf.score(out[:,:PCA_SIZE], Y_classes))
+print('validation score:', clf.score(X_val_out[:,:PCA_SIZE], Y_val_classes))
+
+

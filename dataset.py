@@ -23,7 +23,7 @@ def load_data(directory, categories=None, as_array=False):
         a = next(data)
         X_inputs.extend(a[0])
         Y_inputs.extend(a[1])
-        print(data.batch_index)
+        # print(data.batch_index)
         if data.batch_index == 0:
             break
 

@@ -20,14 +20,14 @@ def clean(base_dir):
     # exit(1)
 
 
-def scrape(validation_set=0., base_dir='./data', rescrape=True):
-    if rescrape:
+def scrape(validation_ratio=0., base_dir='./data', rescrape=False):
+    if rescrape or (not os.path.isdir(base_dir)):
         clean(base_dir)
         kaktus.scrape()
         giant.scrape()
     count = 0
     for fn in glob(base_dir+'/training/*/*.*'):
-        if rand() < validation_set:
+        if rand() < validation_ratio:
             fn2 = fn.replace('training', 'validation', 1).rpartition('/')[0]
             try:
                 os.makedirs(fn2)
@@ -39,4 +39,4 @@ def scrape(validation_set=0., base_dir='./data', rescrape=True):
 
 
 if __name__ == '__main__':
-    scrape(0.2)
+    scrape(0.2, base_dir='../data')

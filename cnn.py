@@ -1,19 +1,20 @@
 import glob
 from keras.preprocessing.image import load_img, img_to_array, array_to_img, ImageDataGenerator
 from keras.models import Sequential, Model
-from keras.layers import Input, Conv2D, Dense, Flatten
+from keras.layers import Input, Conv2D, Dense, Flatten, MaxPool2D
 from keras.backend import int_shape
 from matplotlib import pyplot as plt
 from numpy import array
 
 from glob import glob
 
+from scrapers import scrape
+
 base_dir = './data'
 datasets = ['mtb, city, road']
 
-from scrapers import scrape
-# scrape(0.2)
 
+# scrape(0.1, rescrape=False)
 
 
 def load_data(directory=base_dir, categories=None):
@@ -41,9 +42,13 @@ def load_data(directory=base_dir, categories=None):
 # X_input = []
 # Y_input = []
 
+print('Loading training dataset')
 training_data = load_data(base_dir+'/training')
 
-print(len(training_data), training_data)
+print('Loading validation dataset')
+validation_data = load_data(base_dir+'/validation')
+
+# print(len(training_data), training_data)
 
 # for x, y in data:
 #     print(x.shape, y.shape)
@@ -60,13 +65,16 @@ print(len(training_data), training_data)
 # model.add(Conv2D(4, (5, 5), activation='sigmoid'))
 
 input_layer = Input((64, 64, 1))
-layer = Conv2D(1, (5, 5), strides=(2, 2), activation='relu')(input_layer)
+layer = Conv2D(1, (5, 5), activation='relu')(input_layer)
+layer = MaxPool2D()(layer)
 # print(int_shape(layer))
-layer = Conv2D(1, (5, 5), strides=(2, 2), activation='sigmoid')(layer)
+layer = Conv2D(1, (5, 5), activation='sigmoid')(layer)
+layer = MaxPool2D()(layer)
 # print(int_shape(layer))
-layer = Conv2D(1, (5, 5), strides=(2, 2), activation='relu')(layer)
+layer = Conv2D(1, (5, 5), activation='relu')(layer)
+layer = MaxPool2D()(layer)
 # print(int_shape(layer))
-layer = Conv2D(1, (5, 5), strides=(2, 2), activation='sigmoid')(layer)
+layer = Conv2D(1, (4, 4), activation='sigmoid')(layer)
 # print(int_shape(layer))
 layer = Flatten()(layer)
 # print(int_shape(layer))
@@ -82,6 +90,26 @@ model.compile(loss='categorical_crossentropy',
 
 model.summary()
 
-validation_data = load_data(base_dir+'/validation')
 
-model.fit_generator(training_data, epochs=100, validation_data=validation_data)
+
+history = model.fit_generator(training_data, epochs=500, validation_data=validation_data)
+
+# print(history.history.keys())
+
+plt.plot(history.history['categorical_accuracy'])
+plt.plot(history.history['val_categorical_accuracy'])
+plt.title('Model accuracy')
+plt.ylabel('Categorical accuracy')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'])
+plt.savefig('text/accuracy.svg')
+plt.show()
+# Plot training & validation loss values
+plt.plot(history.history['loss'])
+plt.plot(history.history['val_loss'])
+plt.title('Model loss')
+plt.ylabel('Loss')
+plt.xlabel('Epoch')
+plt.legend(['Train', 'Test'])
+plt.savefig('text/loss.svg')
+plt.show()
